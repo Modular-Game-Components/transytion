@@ -39,9 +39,9 @@ ball = Ball(screen.get_width() / 2.0, 0.0)
 
 # 4 second qudratic fall to center of screen.
 fall = ty.Tween(1.0, # Duration of tween is 4 seconds.
-                  ball, # What object to mess with.
-                  {"y" : screen.get_height() / 2}, # Animate what to where.
-                  ease_func=quad) # How to animate it (defaults to linear)
+                ball, # What object to mess with.
+                {"y" : screen.get_height() / 2}, # Animate what to where.
+                ease_func=quad) # How to animate it (defaults to linear)
 
 ty.default_manager.add(fall) # Start the tween.
 
