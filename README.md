@@ -37,8 +37,8 @@ class Ball:
 
 ball = Ball(screen.get_width() / 2.0, 0.0)
 
-# 4 second qudratic fall to center of screen.
-fall = ty.Tween(1.0, # Duration of tween is 4 seconds.
+# 1 second qudratic fall to center of screen.
+fall = ty.Tween(1.0, # Duration of tween is 1 seconds.
                 ball, # What object to mess with.
                 {"y" : screen.get_height() / 2}, # Animate what to where.
                 ease_func=quad) # How to animate it (defaults to linear)
@@ -74,8 +74,8 @@ class Ball:
 This is used to keep track of the location of the ball on the screen. Tweens operate on fields of objects, so by making a `Ball` object we may tween the `y` (or `x`) fields.
 
 ```python
-# 4 second qudratic fall to center of screen.
-fall = ty.Tween(1.0, # Duration of tween is 4 seconds.
+# 1 second qudratic fall to center of screen.
+fall = ty.Tween(1.0, # Duration of tween is 1 seconds.
                 ball, # What object to mess with.
                 {"y" : screen.get_height() / 2}, # Animate what to where.
                 ease_func=quad) # How to animate it (defaults to linear)
