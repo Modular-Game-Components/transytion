@@ -76,9 +76,9 @@ This is used to keep track of the location of the ball on the screen. Tweens ope
 ```python
 # 4 second qudratic fall to center of screen.
 fall = ty.Tween(1.0, # Duration of tween is 4 seconds.
-                  ball, # What object to mess with.
-                  {"y" : screen.get_height() / 2}, # Animate what to where.
-                  ease_func=quad) # How to animate it (defaults to linear)
+                ball, # What object to mess with.
+                {"y" : screen.get_height() / 2}, # Animate what to where.
+                ease_func=quad) # How to animate it (defaults to linear)
 ```
 
 This constructs our tween. It should be pointed out, by itself, the `Tween` object does not do anything until we tell it to run.
