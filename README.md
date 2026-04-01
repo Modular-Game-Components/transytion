@@ -95,7 +95,7 @@ Lastly, the `TweenManager` needs the time to update each tween it is managing. T
 ty.default_manager.update(dt)
 ```
 
-## `chain`
+## Making more complicated tweens with `chain`
 
 If you perform
 
