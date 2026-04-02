@@ -1,4 +1,4 @@
-# transytion (pre-alpha)
+# transytion (beta)
 
 `transytion` is a utility library for easily creating and managinig tweens in game engines like Pygame. It is heavily inspired by [Flux](https://github.com/rxi/flux) and [HUMP.timer](https://hump.readthedocs.io/en/latest/timer.html) from the [Love2d](https://www.love2d.org/) community.
 
