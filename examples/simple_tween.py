@@ -35,7 +35,6 @@ while running:
     screen.fill((0,0,0))
     pygame.draw.circle(screen, "red", (ball.x, ball.y), 40)
 
-    screen
     pygame.display.flip()
     dt = clock.tick(60) / 1000
 
