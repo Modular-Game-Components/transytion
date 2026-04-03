@@ -8,10 +8,6 @@ from .ease_funcs import linear
 
 
 class Tween:
-    _initial: TweenNode = None
-    _last: TweenNode = None
-    _cur: TweenNode = None
-
     def __init__(self,
                  duration: float, 
                  obj: Any, 
@@ -58,7 +54,7 @@ class TweenNode:
         from the start. Otherwise, start from where they currently are."""
         if self.start is not None:
             for target, start in self.start:
-                self._original[target] = start
+                self._original.update(self.start)
 
     @property
     def progress(self):
@@ -131,6 +127,8 @@ default_manager = TweenManager()
 
 
 def chain(tweens: list[Tween]) -> Tween:
+    """Take a list of tweens and create a single tween that is equivalent to 
+    each tween followed by the next."""
     initial = tweens[0]._initial
     last = tweens[-1]._last
     for t1, t2 in pairwise(tweens):
