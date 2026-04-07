@@ -12,7 +12,7 @@ class Tween:
     def __init__(self,
                  duration: float, 
                  obj: Any, 
-                 targets: dict[(str, float)],
+                 targets: dict[str, float],
                  start: dict[(str, float)] | None = None,
                  ease_func: Callable[[float], float] = linear,
                  callback: Callable[[], None] = lambda: None):
@@ -25,6 +25,22 @@ class Tween:
 
     def reset(self):
         self._cur = self._initial
+
+
+# Some useful Tween specializations.
+
+class EmptyTween(Tween):
+    """Takes no time and does nothing."""
+    def __init__(self):
+        super().__init__(0.0, None, {})
+        self._progress = 1.0 # Prevents ZeroDivisionError and jumps to next 
+                             # tween.
+
+
+class Delay(Tween):
+    """Does not do anything but waits some time."""
+    def __init__(self, duration: float):
+        super().__init__(duration, None, {})
 
 
 @dataclass
@@ -162,13 +178,7 @@ def call_then_tween(tween, manager=default_manager):
 def chain(tweens: list[Tween]) -> Tween:
     """Take a list of tweens and create a single tween that is equivalent to 
     each tween followed by the next."""
-    initial = tweens[0]._initial
-    last = tweens[-1]._last
     for t1, t2 in pairwise(tweens):
         t1._last._next_ = t2._initial
         t2._initial._prev_ = t1._last
-        t1._last = last
-        t2._last = last
-        t1._initial = initial
-        t2._initial = initial
     return tweens[0]
