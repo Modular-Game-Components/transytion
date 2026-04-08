@@ -112,8 +112,43 @@ ty.default_manager.add(t3)
 
 Using `chain`, complicated tweens can be made from smaller tweens. See [this](https://github.com/thyrgle/transytion/blob/main/examples/chained_tween.py) for a complete example.
 
-## A Brief Overview of the Library
+## Decorators: Another Way to Tween
 
-The code for the `Tween` class roughly implements a (doubly) linked list (with a couple super powers!) that store `TweenNode` data. You can think of each `TweenNode` as being a fundamental building block for creating more complex `Tween` objects (but for convenience, the API allows you to just use the `Tween` class).
+Often when thinking in game development terms, it can be tempting to think of game logic and *then* easing and tweens as an afterwards. Unfortunately, this can result in a lot of code restructuring. Transytion can help prevent major refactoring by utilizing Python decorators.
 
-The `TweenManager` keeps a list of tweens and in a [slightly tricky `for` loop progresses through each tween.](https://github.com/thyrgle/transytion/blob/653b9f03412eb16d1af77447b69ba199343dc34e/src/transytion/__init__.py#L91)
+Consider the following scenario: You want a player to move and then say something. Ignoring animations, one might write:
+
+```py
+def say_something():
+    print("Hello!")
+
+say_something()
+```
+
+But if we follow the example above it is a little awkward to combine this with move:
+
+```py
+def say_something():
+    print("Hello!")
+
+move = Tween(..., callback=say_something)
+
+...
+```
+
+Transytion uses decorators to minimize cognitive load:
+
+```py
+move = Tween(...)
+@tween_then_call(move)
+def say_something():
+    print("Hello!")
+
+say_something()
+
+...
+```
+
+The `@tween_then_call(tween)` decorator delays function calls to execute after the supplied tween executes. Thus, we can focus on game logic first *then* decorate the logic to incorporate tweens.
+
+A full example of this (that is, with a gameloop) can be found [here.](https://github.com/thyrgle/transytion/blob/main/examples/tween_then_call.py)
