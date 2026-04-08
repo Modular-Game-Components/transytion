@@ -1,6 +1,5 @@
 from __future__ import annotations
 from collections.abc import Callable
-from itertools import pairwise
 from dataclasses import dataclass
 from copy import copy
 from typing import Any
@@ -9,33 +8,91 @@ from .ease_funcs import linear
 
 
 class Tween:
+    """A list of TweenNodes with some organizational skills."""
     def __init__(self,
                  duration: float, 
                  obj: Any, 
                  targets: dict[str, float],
                  start: dict[(str, float)] | None = None,
                  ease_func: Callable[[float], float] = linear,
-                 callback: Callable[[], None] = lambda: None):
+                 callback: Callable[[], None] = lambda: None,
+                 args: tuple[Any, ...] = None
+                 ):
         """Make a tween with one TweenNode contained in it."""
-        tween = TweenNode(duration, obj, targets,
-                          start, ease_func, callback)
-        self._initial = tween
-        self._last = tween
-        self._cur = tween
+        node = TweenNode(duration, obj, targets,
+                         start, ease_func, callback, args)
+        self.current = 0
+        self.nodes = [node]
+        self._callback = callback
+        self._args = args
+        # This will be set when a manager adds this tween.
+        self._manager = None
+
+    @property
+    def args(self):
+        """Get the args for the *final* callback."""
+        return self._args
+
+    @args.setter
+    def args(self, args: tuple[Any, ...]):
+        """Set the args for the *final* callback."""
+        self._args = args
+        self.nodes[-1].args = args
+
+    @property
+    def callback(self):
+        """Get the *final* callback."""
+        return self._callback
+
+    @callback.setter
+    def callback(self, callback: Callable[[]]):
+        """Set the *final* callback."""
+        self.nodes[-1].callback = callback
+        self._callback = callback
+
+    def pause(self):
+        """Pause a tween. Tells the manager of this tween to put it in the
+        paused tweens list."""
+        self._manager.paused_tweens.append(self)
+        self._manager.active_tweens.remove(self)
+
+    def resume(self):
+        """Resume a tween. If the tween was paused, it is now put in the active
+        tween list and resumed by it's manager."""
+        self._manager.active_tweens.append(self)
+        self._manager.paused_tweens.remove(self)
+
+    @property
+    def finished(self):
+        """Determine if a tween has finished going *forward* or *backward*."""
+        return self.current < 0 or self.current >= len(self.nodes)
+
+    def update(self, dt) -> None:
+        """Updates the current TweenNode and transitions to the next
+        TweenNode if the current one has finished updating."""
+        cur = self.nodes[self.current]
+        cur.update(dt)
+        if cur.progress >= 1:
+            self.current += 1
+            cur.finish()
+        # The whole tween finished, remove it from the _manager.
+        if self.finished:
+            self._manager.remove(self)
+            self._manager = None
 
     def reset(self):
-        self._cur = self._initial
+        """Restarts a tween from the beginning."""
+        # Reset the individual nodes.
+        for node in self.nodes:
+            self.progress = 0
+        # Then reset to beginning.
+        self.current = 0
+
+    def then(self, other):
+        self.nodes.extend(other.nodes)
 
 
 # Some useful Tween specializations.
-
-class EmptyTween(Tween):
-    """Takes no time and does nothing."""
-    def __init__(self):
-        super().__init__(0.0, None, {})
-        self._progress = 1.0 # Prevents ZeroDivisionError and jumps to next 
-                             # tween.
-
 
 class Delay(Tween):
     """Does not do anything but waits some time."""
@@ -45,6 +102,7 @@ class Delay(Tween):
 
 @dataclass
 class TweenNode:
+    """Fundamental building block for Tweens."""
     duration: float
     obj: Any
     targets: dict[str, float] # String of the attributes you want to mutate!
@@ -53,9 +111,6 @@ class TweenNode:
     callback: Callable[[], None] = lambda: None
     args: tuple[Any, ...] = ()
     _progress: float = 0.0
-    _next_: TweenNode | None = None
-    _prev_: TweenNode | None = None
-    _paused: bool = False
 
     def __post_init__(self):
         """Must also have the original and resulting position to actually tween
@@ -74,6 +129,13 @@ class TweenNode:
             for target, start in self.start:
                 self._original.update(self.start)
 
+    def finish(self):
+        self.callback(*self.args)
+
+    def update(self, dt):
+        if self.progress < 1.0:
+            self.progress += dt / self.duration
+
     @property
     def progress(self):
         return self._progress
@@ -88,65 +150,59 @@ class TweenNode:
             loc = (1 - p) * self._original[var] + p * self._destinations[var]
             setattr(self.obj, var, loc)
 
-
 class TweenManager:
-    _to_update: list[Tween]
-    
+    """Keeps track of updating tweens in an update loop."""
     def __init__(self):
-        self._to_update = []
+        self.active_tweens = []
+        self.paused_tweens = []
 
     def add(self, tween: Tween):
-        tween._cur.safe_reset_to_start()
-        self._to_update.append(tween)
+        tween.reset()
+        tween._manager = self
+        self.active_tweens.append(tween)
 
     def remove(self, tween: Tween):
-        self._to_update.remove(tween)
+        # Note: This does not pause a tween. It *removes* it.
+        self.active_tweens.remove(tween)
 
     def update(self, dt):
-        # Remove finished tweens.
-        self._to_update = [x for x in self._to_update if x._cur is not None]
-        # Must use range len pattern, since we must mutate the object.
-        for i in range(len(self._to_update)):
-            # However, most of the loop treats `_to_update` as immutable, so, 
-            # for convenience, we refer to it as `tween_node`.
-            tween_node = self._to_update[i]._cur
-            # If it is paused, don't do anything.
-            if tween_node._paused:
-                continue
-            if tween_node.progress < 1.0: # TweenNode in process.
-                tween_node.progress += dt / tween_node.duration
-            else: # TweenNode finished, move to the next.
-                tween_node.callback(*tween_node.args)
-                # Mut to next is here.
-                self._to_update[i]._cur = tween_node._next_
-                if self._to_update[i]._cur is not None:
-                    # Determine whether to continue from current target's val
-                    # or if the target val should be set to `start` for the
-                    # next TweenNode.
-                    self._to_update[i]._cur.safe_reset_to_start()
-                # Otherwise, entire Tween has finished. (Will be removed in
-                # next call to update.
-
-    def pause(self, tween: Tween):
-        tween._paused = True
-
-    def resume(self, tween: Tween):
-        tween._paused = False
+        for tween in self.active_tweens:
+            tween.update(dt)
 
     def pause_all(self):
-        for tween in self._to_update:
-            tween._paused = True
+        for tween in self.active_tweens:
+            tween.pause()
+
+    def resume_all(self):
+        for tween in self.paused_tweens:
+            tween.resume()
 
     def remove_all(self):
-        self._to_update = []
+        self.active_tweens = []
+        self.paused_tweens = []
 
 
 default_manager = TweenManager()
 
 
-def tween_then_call(tween, manager=default_manager):
+def tweenify(tween):
+    """Makes a function when called return a tween that executes the
+    decorated function for the tween's callback."""
+    def decorator(func):
+        def wrapper(*args):
+            twn_cpy = copy(tween)
+            twn_cpy._last.args = args
+            twn_cpy._last.callback = func
+            return twn_cpy
+        return wrapper
+    return decorator
+
+def tween_then_call(tween: Tween, manager: TweenManager=default_manager):
     """Intended to be used as a decorator. Given a function f, f(args) now 
-    executes the tween *then* calls the function.
+    executes the tween *then* calls the function. Similar to tweenify, but
+    intended to be used by being added to a particular tween manager, and,
+    by default, the default manager. This is largely a convenience decorator
+    for tweenify.
     
     NOTE: f(args) followed by f(args) will not block the second call. Two 
     tweens will be added and both will do a double execution of f.
@@ -154,8 +210,8 @@ def tween_then_call(tween, manager=default_manager):
     def decorator(func):
         def wrapper(*args):
             twn_cpy = copy(tween)
-            twn_cpy._last.args = args
-            twn_cpy._last.callback = func
+            twn_cpy.args = args
+            twn_cpy.callback = func
             manager.add(twn_cpy)
         return wrapper
     return decorator
@@ -178,7 +234,7 @@ def call_then_tween(tween, manager=default_manager):
 def chain(tweens: list[Tween]) -> Tween:
     """Take a list of tweens and create a single tween that is equivalent to 
     each tween followed by the next."""
-    for t1, t2 in pairwise(tweens):
-        t1._last._next_ = t2._initial
-        t2._initial._prev_ = t1._last
+    start = copy(tweens[0])
+    for tween in tweens[1:]:
+        start.then(tween)
     return tweens[0]
