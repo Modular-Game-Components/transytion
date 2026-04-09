@@ -16,7 +16,7 @@ class Tween:
                  start: dict[(str, float)] | None = None,
                  ease_func: Callable[[float], float] = linear,
                  callback: Callable[[], None] = lambda: None,
-                 args: tuple[Any, ...] = None
+                 args: tuple[Any, ...] = tuple()
                  ):
         """Make a tween with one TweenNode contained in it."""
         node = TweenNode(duration, obj, targets,
@@ -109,7 +109,7 @@ class TweenNode:
     start: dict[str, float] | None = None
     ease_func: Callable[[float], float] = linear
     callback: Callable[[], None] = lambda: None
-    args: tuple[Any, ...] = ()
+    args: tuple[Any, ...] = tuple()
     _progress: float = 0.0
 
     def __post_init__(self):
