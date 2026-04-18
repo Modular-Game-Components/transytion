@@ -14,4 +14,5 @@ Contents
 
    tween
    example
+   chaining
    api
