@@ -17,4 +17,5 @@ Contents
 
 .. toctree::
 
+   tween
    api
