@@ -51,7 +51,7 @@ This is a modification of the first example presented `here <https://pyga.me/doc
 What is going on?
 -----------------
 
-.. codeblock:: python
+.. code-block:: python
 
    @dataclass
    class Ball:
@@ -60,7 +60,7 @@ What is going on?
 
 This is used to keep track of the location of the ball on the screen. Tweens operate on attributes of objects, so by making a ``Ball`` object we may tween the ``y`` (or ``x``) attributes.
 
-.. codeblock:: python
+.. code-block:: python
 
    # 1 second qudratic fall to center of screen.
    fall = ty.Tween(1.0, # Duration of tween is 1 seconds.
@@ -70,7 +70,7 @@ This is used to keep track of the location of the ball on the screen. Tweens ope
 
 This constructs our tween. It should be pointed out, by itself, the ``Tween`` object does not do anything until we tell it to run.
 
-.. codeblock:: python
+.. code-block:: python
 
    ty.default_manager.add(fall) # Start the tween.
 
@@ -78,6 +78,6 @@ Once the tween is added to a ``TweenManager`` object, (such as ``ty.default_mana
 
 Lastly, the ``TweenManager`` needs the time to update each tween it is managing. This is done by going to your game loop and adding the line
 
-.. codeblock:: python
+.. code-block:: python
 
    ty.default_manager.update(dt)
