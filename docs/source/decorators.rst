@@ -15,6 +15,7 @@ Consider the following scenario: You want a player to move and then say somethin
 But if we follow the example above it is a little awkward to combine this with move:
 
 .. code-block:: python
+
    def say_something():
        print("Hello!")
 
@@ -32,6 +33,6 @@ transytion uses decorators to minimize cognitive load. The following is equivale
        print("Hello!")
 
    say_something()
-...
+   ...
 
 The ``@tween_then_call(tween)`` decorator delays function calls to execute after the supplied tween executes. Thus, we can focus on game logic first *then* decorate the logic to incorporate tweens.
