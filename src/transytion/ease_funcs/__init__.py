@@ -4,22 +4,27 @@ import math
 
 
 def linear(x: float) -> float:
-    """ Linear tween that returns the thing itself."""
+    """Linear tween that returns the thing itself."""
     return x
 
 def quad(x: float) -> float:
+    """Quadratic tween, returns the square of itself."""
     return x ** 2
 
 def cubic(x: float) -> float:
+    """Cubic tween, returns the cube of itself."""
     return x ** 3
 
 def quart(x: float) -> float:
+    """Quartic tween, returns itself raised to the fourth power."""
     return x ** 4
 
 def quint(x: float) -> float:
+    """Quintic tween, returns itself raised to the fifth power."""
     return x ** 5
 
 def sine(x: float) -> float:
+    """Sinusoidal tween."""
     return 1 - math.cos(x * math.pi / 2)
 
 
@@ -29,6 +34,8 @@ def sine(x: float) -> float:
 # Supply an easeing function *as* an argument to either `out` or `inout`.
 
 def inout(f: Callable[[float], float]) -> Callable[[float], float]:
+    """Doubles the speed of an easing function ``f``. Plays the easing function
+    then plays the reverse of ``f`` for the second half of the tween."""
     def g(x: float) -> float:
         x *= 2
         if x < 1:
@@ -39,6 +46,7 @@ def inout(f: Callable[[float], float]) -> Callable[[float], float]:
     return g
 
 def out(f: Callable[[float], float]) -> Callable[[float], float]:
+    """Reverses the easing function."""
     def g(x: float) -> float:
         return 1 - f(x)
     return g
