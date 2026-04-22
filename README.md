@@ -14,6 +14,7 @@ A tween takes a variable and gradually changes it from one value to another as t
 Furthermore, it is often to have convenient to have a way to indicate to the program that the tween has finished. To do so, you may supply a `callback` function to execute once the tween has finished terminating.
 
 ## How do I use it?
+![transytion-showcase](assets/showcase_final.gif)
 
 This library allows you to make tweens and compose them with other tweens that can be used a variety of cases. For instance, you can move objects, change their color, etc. The library operates on fields of objects. Let us see what that means with an example in [Pygame-ce](https://pyga.me/docs/index.html) (although the example can be adapted to other game libraries).
 
