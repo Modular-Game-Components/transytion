@@ -15,7 +15,10 @@ class Tween:
                  targets: dict[str, float],
                  start: dict[(str, float)] | None = None,
                  ease_func: Callable[[float], float] = linear,
+                 before_execution: Callable[[], None] = lambda: None,
                  callback: Callable[[], None] = lambda: None,
+                 on_pause: Callable[[], None] = lambda: None,
+                 on_remove: Callable[[], None] = lambda: None,
                  args: tuple[Any, ...] = tuple()
                  ):
         """Make a tween with one TweenNode contained in it."""
@@ -23,7 +26,10 @@ class Tween:
                          start, ease_func, callback, args)
         self.current = 0
         self.nodes = [node]
+        self._before_execution = before_execution
         self._callback = callback
+        self._on_pause = on_pause
+        self._on_remove = on_remove
         self._args = args
         # This will be set when a manager adds this tween.
         self._manager = None
@@ -53,6 +59,7 @@ class Tween:
     def pause(self):
         """Pause a tween. Tells the manager of this tween to put it in the
         paused tweens list."""
+        self._on_pause()
         self._manager.paused_tweens.append(self)
         self._manager.active_tweens.remove(self)
 
@@ -164,6 +171,7 @@ class TweenManager:
 
     def remove(self, tween: Tween):
         # Note: This does not pause a tween. It *removes* it.
+        tween._on_remove()
         self.active_tweens.remove(tween)
 
     def update(self, dt):
@@ -172,6 +180,7 @@ class TweenManager:
 
     def pause_all(self):
         for tween in self.active_tweens:
+            tween._on_pause()
             tween.pause()
 
     def resume_all(self):
