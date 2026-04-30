@@ -19,18 +19,21 @@ class Tween:
                  callback: Callable[[], None] = lambda: None,
                  on_pause: Callable[[], None] = lambda: None,
                  on_remove: Callable[[], None] = lambda: None,
-                 args: tuple[Any, ...] = tuple()
+                 args: tuple[Any, ...] = tuple(),
+                 repeat_count: int = 1
                  ):
         """Make a tween with one TweenNode contained in it."""
         node = TweenNode(duration, obj, targets,
                          start, ease_func, callback, args)
         self.current = 0
         self.nodes = [node]
+        node.start()
         self._before_execution = before_execution
         self._callback = callback
         self._on_pause = on_pause
         self._on_remove = on_remove
         self._args = args
+        self._repeat_count = repeat_count
         # This will be set when a manager adds this tween.
         self._manager = None
 
@@ -72,16 +75,20 @@ class Tween:
     @property
     def finished(self):
         """Determine if a tween has finished going *forward* or *backward*."""
-        return self.current < 0 or self.current >= len(self.nodes)
+        return self.current < 0 \
+            or self.current >= len(self.nodes) * self._repeat_count
 
     def update(self, dt) -> None:
         """Updates the current TweenNode and transitions to the next
         TweenNode if the current one has finished updating."""
-        cur = self.nodes[self.current]
+        cur = self.nodes[self.current % len(self.nodes)]
+        nxt = self.nodes[(self.current + 1) % len(self.nodes)]
         cur.update(dt)
         if cur.progress >= 1:
             self.current += 1
             cur.finish()
+            nxt.start()
+            nxt.progress = 0
         # The whole tween finished, remove it from the _manager.
         if self.finished:
             self._manager.remove(self)
@@ -113,13 +120,13 @@ class TweenNode:
     duration: float
     obj: Any
     targets: dict[str, float] # String of the attributes you want to mutate!
-    start: dict[str, float] | None = None
+    start_vals: dict[str, float] | None = None
     ease_func: Callable[[float], float] = linear
     callback: Callable[[], None] = lambda: None
     args: tuple[Any, ...] = tuple()
     _progress: float = 0.0
 
-    def __post_init__(self):
+    def start(self):
         """Must also have the original and resulting position to actually tween
         between those values."""
         self._original = {}
@@ -132,9 +139,9 @@ class TweenNode:
     def safe_reset_to_start(self):
         """If start position is specified (not None), make sure values start
         from the start. Otherwise, start from where they currently are."""
-        if self.start is not None:
-            for target, start in self.start:
-                self._original.update(self.start)
+        if self.start_vals is not None:
+            for target, start in self.start_vals:
+                self._original.update(self.start_vals)
 
     def finish(self):
         self.callback(*self.args)
@@ -154,7 +161,9 @@ class TweenNode:
         self._progress = value
         for var in self.targets:
             p = self.ease_func(self._progress)
-            loc = (1 - p) * self._original[var] + p * self._destinations[var]
+            orig = float(self._original[var])
+            dest = float(self._destinations[var])
+            loc = (1.0 - p) * orig + p * dest
             setattr(self.obj, var, loc)
 
 
@@ -247,4 +256,11 @@ def chain(tweens: list[Tween]) -> Tween:
     start = copy(tweens[0])
     for tween in tweens[1:]:
         start.then(tween)
-    return tweens[0]
+    return start
+
+def repeat(tween: Tween, count=float("inf")) -> Tween:
+    """Repeats `count` times. (Defaults to indefinitely, that is float("inf")
+    """
+    new_tween = copy(tween)
+    new_tween._repeat_count = count
+    return new_tween
