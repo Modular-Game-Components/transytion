@@ -53,23 +53,22 @@ def elastic(x: float) -> float:
         return 1
     return -(2 ** (10 * x - 10)) * math.sin((x * 10 - 10.75) * c)
 
-def _bounce(x: float) -> float:
+def bounce(x: float) -> float:
     """Performs bound (out) tween. See https://easings.net/#easeOutBounce"""
     n = 7.5625
     d = 2.75
 
-    if x < 1 / d:
-        return n * x ** 2
-    elif x < 2 / d:
-        x -= 1.5
-        return n * (x / d) * x + 0.75
+    if x < 1.0 / d:
+        return n * x * x
+    elif x < 2.0 / d:
+        x -= 1.5 / d
+        return n * x * x + 0.75
     elif x < 2.5 / d:
-        x -= 2.625
-        return n * (x / d) * x + 0.984375
-
-def bounce(x: float) -> float:
-    """Performs bounce (in) tween. See https://easings.net/#easeInBounce"""
-    return 1 - _bounce(x)
+        x -= 2.25 / d
+        return n * x * x + 0.9375
+    else:
+        x -= 2.625 / d
+        return n * x * x + 0.984375
 
 # Common in-out functions (in is just the original function).
 # See https://hump.readthedocs.io/en/latest/timer.html#tweening-methods for
