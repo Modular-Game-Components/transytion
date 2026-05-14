@@ -30,6 +30,7 @@ Then we need a tween for rolling. So, we must now modify the ``x`` attribute so 
 One might be tempted to do:
 
 .. code-block:: python
+
    ty.default_manager.add(fall)
    ty.default_manager.add(roll)
 
