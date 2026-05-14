@@ -21,8 +21,9 @@ This library allows you to make tweens and compose them with other tweens that c
    class Ball:
        x: float
        y: float
+       r: float
 
-   ball = Ball(screen.get_width() / 2.0, 0.0)
+   ball = Ball(screen.get_width() / 2.0, 0.0 - 40, 40)
 
    # 1 second qudratic fall to center of screen.
    fall = ty.Tween(1.0, # Duration of tween is 1 seconds.
@@ -40,14 +41,14 @@ This library allows you to make tweens and compose them with other tweens that c
        ty.default_manager.update(dt)
  
        screen.fill((0,0,0))
-       pygame.draw.circle(screen, "red", (ball.x, ball.y), 40)
+       pygame.draw.circle(screen, "red", (ball.x, ball.y), ball.r)
    
        pygame.display.flip()
        dt = clock.tick(60) / 1000
 
    pygame.quit()
 
-This is a modification of the first example presented `here <https://pyga.me/docs/>`_. It is recommended you become familiar with that example, and then continue with this example. If you run the program, a red circle moves down the screen.
+This is a modification of the first example presented `here <https://pyga.me/docs/>`_. It is recommended you become familiar with that example, and then continue with this example. If you run the program, a red circle will fall and bounce on the screen.
 
 -----------------
 What is going on?
@@ -59,8 +60,9 @@ What is going on?
    class Ball:
        x: float
        y: float
+       r: float
 
-This is used to keep track of the location of the ball on the screen. Tweens operate on attributes of objects, so by making a ``Ball`` object we may tween the ``y`` (or ``x``) attributes.
+This is used to keep track of the location (and radius) of the ball on the screen. Tweens operate on attributes of objects, so by making a ``Ball`` object we may tween the ``y`` (``x``, or even ``r``) attributes.
 
 .. code-block:: python
 
