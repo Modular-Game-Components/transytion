@@ -7,7 +7,7 @@ This library allows you to make tweens and compose them with other tweens that c
 
    import transytion as ty
    from dataclasses import dataclass
-   from transytion.ease_funcs import quad
+   from transytion.ease_funcs import bounce
    import pygame
    
    
