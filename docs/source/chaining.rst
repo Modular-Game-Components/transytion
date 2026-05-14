@@ -82,8 +82,8 @@ For the sake of completeness, here is the entire example (it should look similar
    ball = Ball(screen.get_width() / 2.0, 0.0 - 40.0, 40.0)
 
    fall = ty.Tween(1.0, ball,
-                {"y" : screen.get_height() / 2},
-                  ease_func=bounce)
+                   {"y" : screen.get_height() / 2},
+                   ease_func=bounce)
 
    roll = ty.Tween(1.0, ball,
                    {"x" : screen.get_width() + ball.r},
