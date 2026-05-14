@@ -37,9 +37,9 @@ But that does not quite work. Observe:
 
 .. image:: (TODO)
 
----------------------------------
-What Went Wrong? (And How to Fix)
----------------------------------
+-------------------------------------
+What Went Wrong? (And How to Fix It!)
+-------------------------------------
 
 For more complicated movements, we may need to tween multiple values at once. In fact, this is more likely to happen than sequentially running tween after tween. Thus, simply adding the tweens to a manager will run them *concurrently*. Fortunately, it is not too hard to fix. We will use the ``transytion.chain`` function to force a sequence of tweens to run in order. Replace:
 
