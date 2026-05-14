@@ -21,7 +21,7 @@ This library allows you to make tweens and compose them with other tweens that c
 ```python
 import transytion as ty
 from dataclasses import dataclass
-from transytion.ease_funcs import quad
+from transytion.ease_funcs import bounce
 import pygame
 
 
@@ -35,14 +35,15 @@ dt = 0
 class Ball:
     x: float
     y: float
+    r: float
 
-ball = Ball(screen.get_width() / 2.0, 0.0)
+ball = Ball(screen.get_width() / 2.0, 0.0 - 40.0, 40.0)
 
 # 1 second qudratic fall to center of screen.
 fall = ty.Tween(1.0, # Duration of tween is 1 seconds.
                 ball, # What object to mess with.
                 {"y" : screen.get_height() / 2}, # Animate what to where.
-                ease_func=quad) # How to animate it (defaults to linear)
+                ease_func=bounce) # How to animate it (defaults to linear)
 
 ty.default_manager.add(fall) # Start the tween.
 
@@ -54,7 +55,7 @@ while running:
     ty.default_manager.update(dt)
  
     screen.fill((0,0,0))
-    pygame.draw.circle(screen, "red", (ball.x, ball.y), 40)
+    pygame.draw.circle(screen, "red", (ball.x, ball.y), ball.r)
 
     pygame.display.flip()
     dt = clock.tick(60) / 1000
@@ -69,16 +70,17 @@ This is a modification of the first example presented [here](https://pyga.me/doc
 class Ball:
     x: float
     y: float
+    r: float
 ```
 
-This is used to keep track of the location of the ball on the screen. Tweens operate on fields of objects, so by making a `Ball` object we may tween the `y` (or `x`) fields.
+This is used to keep track of the location (and radius) of the ball on the screen. Tweens operate on fields of objects, so by making a `Ball` object we may tween the `y` (`x`, or even `r`) attributes.
 
 ```python
 # 1 second qudratic fall to center of screen.
 fall = ty.Tween(1.0, # Duration of tween is 1 seconds.
                 ball, # What object to mess with.
                 {"y" : screen.get_height() / 2}, # Animate what to where.
-                ease_func=quad) # How to animate it (defaults to linear)
+                ease_func=bounce) # How to animate it (defaults to linear)
 ```
 
 This constructs our tween. It should be pointed out, by itself, the `Tween` object does not do anything until we tell it to run.
