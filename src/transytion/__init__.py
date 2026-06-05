@@ -20,7 +20,7 @@ class Tween:
                  on_pause: Callable[[], None] = lambda: None,
                  on_remove: Callable[[], None] = lambda: None,
                  args: tuple[Any, ...] = tuple(),
-                 repeat_count: int = 1
+                 repeat_count: int | float = 1 # float for when float("inf")
                  ):
         """Make a tween with one TweenNode contained in it."""
         node = TweenNode(duration, obj, targets,
@@ -54,7 +54,7 @@ class Tween:
         return self._callback
 
     @callback.setter
-    def callback(self, callback: Callable[[]]):
+    def callback(self, callback: Callable[[], None]):
         """Set the *final* callback."""
         self.nodes[-1].callback = callback
         self._callback = callback
@@ -62,6 +62,7 @@ class Tween:
     def pause(self):
         """Pause a tween. Tells the manager of this tween to put it in the
         paused tweens list."""
+        assert self._manager is not None, "Not added to a manager yet!"
         self._on_pause()
         self._manager.paused_tweens.append(self)
         self._manager.active_tweens.remove(self)
@@ -69,6 +70,7 @@ class Tween:
     def resume(self):
         """Resume a tween. If the tween was paused, it is now put in the active
         tween list and resumed by it's manager."""
+        assert self._manager is not None, "Not added to a manager yet!"
         self._manager.active_tweens.append(self)
         self._manager.paused_tweens.remove(self)
 
@@ -91,6 +93,7 @@ class Tween:
             nxt.progress = 0
         # The whole tween finished, remove it from the _manager.
         if self.finished:
+            assert self._manager is not None, "Not added to a manager yet!"
             self._manager.remove(self)
             self._manager = None
 
@@ -144,7 +147,7 @@ class TweenNode:
                 self._original.update(self.start_vals)
 
     def finish(self):
-        self.callback(*self.args)
+        self.callback()
 
     def update(self, dt):
         if self.progress < 1.0:
@@ -170,8 +173,8 @@ class TweenNode:
 class TweenManager:
     """Keeps track of updating tweens in an update loop."""
     def __init__(self):
-        self.active_tweens = []
-        self.paused_tweens = []
+        self.active_tweens: list = []
+        self.paused_tweens: list = []
 
     def add(self, tween: Tween):
         tween.reset()
