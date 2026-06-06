@@ -1,8 +1,8 @@
 API
 ===
 
-.. automodapi:: transytion
-   :no-inheritance-diagram:
+.. automodule:: transytion
+   :members:
 
-.. automodapi:: transytion.ease_funcs
-   :no-inheritance-diagram:
+.. automodule:: transytion.ease_funcs
+   :members:
