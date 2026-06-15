@@ -1,5 +1,5 @@
 from __future__ import annotations
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from copy import copy
 from typing import Any
@@ -14,7 +14,7 @@ class Tween:
                  duration: float = 0.0, 
                  obj: Any = None,
                  targets: dict[str, float] = {},
-                 children: [Tween | TweenNode] = [],
+                 children: list[Tween] | list[TweenNode] = [],
                  start_val: dict[(str, float)] | None = None,
                  ease_func: Callable[[float], float] = linear,
                  before_execution: Callable[[], None] = lambda: None,
@@ -27,16 +27,16 @@ class Tween:
         if len(children) == 0:
             node = TweenNode(duration, obj, targets,
                              ease_func, callback, args)
-            self.children = [node]
-            self._iter_children = iter(self.children)
+            self.children: list[Tween] | list[TweenNode] = [node]
+            self._iter_children: Iterator[Tween] | Iterator[TweenNode] = iter(self.children)
             self.duration = duration
         else:
             duration = 0
             for tween in children:
                 duration += tween.duration
             self.duration = duration
-            self.children = children
-            self._iter_children = iter(children)
+            self.children: list[Tween] | list[TweenNode] = children
+            self._iter_children: Iterator[Tween] | Iterator[TweenNode] = iter(children)
         self.cur = next(self._iter_children)
         self.cur.start()
         self._before_execution = before_execution
@@ -279,7 +279,7 @@ def repeat(tween: Tween, count=None) -> Tween:
     """Repeats `count` times. (Defaults to indefinitely = None)
     """
     if count is None:
-        tween.children = itertools.cycle(tween.children)
+        tween.children = itertools.cycle(tween.children) # pyrefly: ignore[bad-assignment]
         tween._iter_children = iter(tween.children)
         next(tween._iter_children) # Skip the first already done!
     else:
