@@ -3,6 +3,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from copy import copy
 from typing import Any
+import itertools
 
 from .ease_funcs import linear
 
@@ -10,30 +11,40 @@ from .ease_funcs import linear
 class Tween:
     """A list of TweenNodes with some organizational skills."""
     def __init__(self,
-                 duration: float, 
-                 obj: Any, 
-                 targets: dict[str, float],
-                 start: dict[(str, float)] | None = None,
+                 duration: float = 0.0, 
+                 obj: Any = None,
+                 targets: dict[str, float] = {},
+                 children: [Tween | TweenNode] = [],
+                 start_val: dict[(str, float)] | None = None,
                  ease_func: Callable[[float], float] = linear,
                  before_execution: Callable[[], None] = lambda: None,
                  callback: Callable[[], None] = lambda: None,
                  on_pause: Callable[[], None] = lambda: None,
                  on_remove: Callable[[], None] = lambda: None,
                  args: tuple[Any, ...] = tuple(),
-                 repeat_count: int | float = 1 # float for when float("inf")
                  ):
-        """Make a tween with one TweenNode contained in it."""
-        node = TweenNode(duration, obj, targets,
-                         start, ease_func, callback, args)
-        self.current = 0
-        self.nodes = [node]
-        node.start()
+        """Make a tween either with TweenNode params or a collection of Tweens."""
+        if len(children) == 0:
+            node = TweenNode(duration, obj, targets,
+                             ease_func, callback, args)
+            self.children = [node]
+            self._iter_children = iter(self.children)
+            self.duration = duration
+        else:
+            duration = 0
+            for tween in children:
+                duration += tween.duration
+            self.duration = duration
+            self.children = children
+            self._iter_children = iter(children)
+        self.cur = next(self._iter_children)
+        self.cur.start()
         self._before_execution = before_execution
         self._callback = callback
         self._on_pause = on_pause
         self._on_remove = on_remove
         self._args = args
-        self._repeat_count = repeat_count
+        self.finished = False
         # This will be set when a manager adds this tween.
         self._manager = None
 
@@ -46,7 +57,6 @@ class Tween:
     def args(self, args: tuple[Any, ...]):
         """Set the args for the *final* callback."""
         self._args = args
-        self.nodes[-1].args = args
 
     @property
     def callback(self):
@@ -56,7 +66,6 @@ class Tween:
     @callback.setter
     def callback(self, callback: Callable[[], None]):
         """Set the *final* callback."""
-        self.nodes[-1].callback = callback
         self._callback = callback
 
     def pause(self):
@@ -74,40 +83,45 @@ class Tween:
         self._manager.active_tweens.append(self)
         self._manager.paused_tweens.remove(self)
 
-    @property
-    def finished(self):
-        """Determine if a tween has finished going *forward* or *backward*."""
-        return self.current < 0 \
-            or self.current >= len(self.nodes) * self._repeat_count
+    def start(self):
+        """Start a tween from the beginning."""
+        # Start the current node.
+        self.cur.start()
 
     def update(self, dt) -> None:
         """Updates the current TweenNode and transitions to the next
         TweenNode if the current one has finished updating."""
-        cur = self.nodes[self.current % len(self.nodes)]
-        nxt = self.nodes[(self.current + 1) % len(self.nodes)]
-        cur.update(dt)
-        if cur.progress >= 1:
-            self.current += 1
-            cur.finish()
-            nxt.start()
-            nxt.progress = 0
-        # The whole tween finished, remove it from the _manager.
-        if self.finished:
-            assert self._manager is not None, "Not added to a manager yet!"
+        if self.finished and self._manager is not None:
             self._manager.remove(self)
             self._manager = None
 
+        if self.cur.finished:
+            try:
+                self.cur = next(self._iter_children)
+                self.cur.soft_reset()
+                self.cur.start()
+            except StopIteration:
+                self.finished = True
+                return
+        self.cur.update(dt)
+
+    def soft_reset(self):
+        for tween in self.children:
+            tween.soft_reset()
+        self.finished = False
+        self._iter_children = iter(self.children)
+        self.cur = next(self._iter_children)
+
     def reset(self):
         """Restarts a tween from the beginning."""
-        # Reset the individual nodes.
-        for node in self.nodes:
-            self.progress = 0
-        # Then reset to beginning.
-        self.current = 0
-
-    def then(self, other):
-        self.nodes.extend(other.nodes)
-
+        # Reset the individual tweens.
+        for tween in self.children:
+            tween.reset()
+        # No longer have this tween be finished.
+        self.finished = False
+        # Restart the children iterator to be at the beginning.
+        self._iter_children = iter(self.children)
+        self.cur = next(self._iter_children)
 
 # Some useful Tween specializations.
 
@@ -123,7 +137,6 @@ class TweenNode:
     duration: float
     obj: Any
     targets: dict[str, float] # String of the attributes you want to mutate!
-    start_vals: dict[str, float] | None = None
     ease_func: Callable[[float], float] = linear
     callback: Callable[[], None] = lambda: None
     args: tuple[Any, ...] = tuple()
@@ -131,27 +144,26 @@ class TweenNode:
 
     def start(self):
         """Must also have the original and resulting position to actually tween
-        between those values."""
+        between those values.
+        NOTE: Instead of using __post__init__, we internally call start when
+        needed. This makes chaining tweens significantly easier."""
         self._original = {}
         self._destinations = {}
         # Just use what ever value the obj currently has.
         for target, dest in self.targets.items():
             self._original[target] = getattr(self.obj, target)
             self._destinations[target] = dest
-
-    def safe_reset_to_start(self):
-        """If start position is specified (not None), make sure values start
-        from the start. Otherwise, start from where they currently are."""
-        if self.start_vals is not None:
-            for target, start in self.start_vals:
-                self._original.update(self.start_vals)
+        self.soft_reset()
 
     def finish(self):
         self.callback()
 
-    def update(self, dt):
-        if self.progress < 1.0:
-            self.progress += dt / self.duration
+    @property
+    def finished(self):
+        return self.progress >= 1.0
+
+    def update(self, dt: float):
+        self.progress += dt / self.duration
 
     @property
     def progress(self):
@@ -169,6 +181,12 @@ class TweenNode:
             loc = (1.0 - p) * orig + p * dest
             setattr(self.obj, var, loc)
 
+    def reset(self):
+        self.progress = 0.0
+
+    def soft_reset(self):
+        self._progress = 0.0
+
 
 class TweenManager:
     """Keeps track of updating tweens in an update loop."""
@@ -177,7 +195,6 @@ class TweenManager:
         self.paused_tweens: list = []
 
     def add(self, tween: Tween):
-        tween.reset()
         tween._manager = self
         self.active_tweens.append(tween)
 
@@ -256,14 +273,18 @@ def call_then_tween(tween, manager=default_manager):
 def chain(tweens: list[Tween]) -> Tween:
     """Take a list of tweens and create a single tween that is equivalent to 
     each tween followed by the next."""
-    start = copy(tweens[0])
-    for tween in tweens[1:]:
-        start.then(tween)
-    return start
+    return Tween(children=tweens)
 
-def repeat(tween: Tween, count=float("inf")) -> Tween:
-    """Repeats `count` times. (Defaults to indefinitely, that is float("inf")
+def repeat(tween: Tween, count=None) -> Tween:
+    """Repeats `count` times. (Defaults to indefinitely = None)
     """
-    new_tween = copy(tween)
-    new_tween._repeat_count = count
-    return new_tween
+    if count is None:
+        tween.children = itertools.cycle(tween.children)
+        tween._iter_children = iter(tween.children)
+        next(tween._iter_children) # Skip the first already done!
+    else:
+        tween.children = tween.children * count
+        tween._iter_children = iter(tween.children)
+        next(tween._iter_children) # Skip the first already done!
+    return tween
+
