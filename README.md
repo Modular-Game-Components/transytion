@@ -2,6 +2,21 @@
 
 `transytion` is a utility library for easily creating and managinig tweens in game engines like Pygame. It is heavily inspired by [Flux](https://github.com/rxi/flux) and [HUMP.timer](https://hump.readthedocs.io/en/latest/timer.html) from the [Love2d](https://www.love2d.org/) community.
 
+## Quick Install
+
+If you use [pip](https://pypi.org/project/pip/):
+
+```
+pip install transytion
+```
+
+If you use [uv](https://github.com/astral-sh/uv):
+
+```
+uv add transytion
+```
+
+
 ## What is a tween?
 
 A tween takes a variable and gradually changes it from one value to another as time progresses. A player may move from one point to another over a time period for instance. Thus, at the heart of it, a tween must:
