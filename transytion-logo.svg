@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" width="160" height="160">
+  <defs>
+    <linearGradient id="pyGradient" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFD43B"/>
+      <stop offset="100%" stop-color="#306998"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="4" y="4" width="152" height="152" rx="28" fill="#2B2118"/>
+
+  <line x1="36" y1="34" x2="36" y2="126" stroke="#6B5B4E" stroke-width="3" stroke-linecap="round"/>
+  <line x1="36" y1="126" x2="128" y2="126" stroke="#6B5B4E" stroke-width="3" stroke-linecap="round"/>
+
+  <path d="M46,114 C 72,114 88,46 118,46"
+        fill="none" stroke="url(#pyGradient)" stroke-width="7" stroke-linecap="round"/>
+
+  <circle cx="46" cy="114" r="5.5" fill="#FFD43B" stroke="#2B2118" stroke-width="1.5"/>
+  <circle cx="118" cy="46" r="5.5" fill="#306998" stroke="#2B2118" stroke-width="1.5"/>
+</svg>
