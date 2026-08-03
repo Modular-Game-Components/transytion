@@ -15,7 +15,7 @@ class Tween:
                  duration: float = None, 
                  rate: float = None,
                  obj: Any = None,
-                 targets: dict[str, float] = field(default_factory=dict),
+                 targets: dict[str, float] = {},
                  children: list[Tween] | list[TweenNode] = [],
                  start_val: dict[(str, float)] | None = None,
                  ease_func: Callable[[float], float] = linear,
