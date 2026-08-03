@@ -1,9 +1,10 @@
 from __future__ import annotations
 from collections.abc import Callable, Iterator
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from copy import copy
 from typing import Any
 import itertools
+from math import dist
 
 from .ease_funcs import linear
 
@@ -11,9 +12,10 @@ from .ease_funcs import linear
 class Tween:
     """A list of TweenNodes with some organizational skills."""
     def __init__(self,
-                 duration: float = 0.0, 
+                 duration: float = None, 
+                 rate: float = None,
                  obj: Any = None,
-                 targets: dict[str, float] = {},
+                 targets: dict[str, float] = field(default_factory=dict),
                  children: list[Tween] | list[TweenNode] = [],
                  start_val: dict[(str, float)] | None = None,
                  ease_func: Callable[[float], float] = linear,
@@ -25,16 +27,21 @@ class Tween:
                  ):
         """Make a tween either with TweenNode params or a collection of Tweens."""
         if len(children) == 0:
-            node = TweenNode(duration, obj, targets,
-                             ease_func, callback, args)
+            if rate is None and duration is None:
+                raise ValueError("Neither rate or duration is defined")
+            if duration is not None:
+                self.duration = duration
+            elif rate is not None:
+                self.duration = 1.0
+            node = TweenNode(duration=duration, obj=obj, targets=targets,
+                             ease_func=ease_func, args=args)
             self.children: list[Tween] | list[TweenNode] = [node]
             self._iter_children: Iterator[Tween] | Iterator[TweenNode] = iter(self.children)
-            self.duration = duration
         else:
-            duration = 0
+            comp_duration = 0.0
             for tween in children:
-                duration += tween.duration
-            self.duration = duration
+                comp_duration += tween.duration
+            self.duration = comp_duration
             self.children: list[Tween] | list[TweenNode] = children
             self._iter_children: Iterator[Tween] | Iterator[TweenNode] = iter(children)
         self.cur = next(self._iter_children)
@@ -92,6 +99,7 @@ class Tween:
         """Updates the current TweenNode and transitions to the next
         TweenNode if the current one has finished updating."""
         if self.finished and self._manager is not None:
+            self.callback(*self.args)
             self._manager.remove(self)
             self._manager = None
 
@@ -128,19 +136,28 @@ class Tween:
 class Delay(Tween):
     """Does not do anything but waits some time."""
     def __init__(self, duration: float):
-        super().__init__(duration, None, {})
+        super().__init__(duration=duration, obj=None, targets={})
 
 
 @dataclass
 class TweenNode:
     """Fundamental building block for Tweens."""
-    duration: float
-    obj: Any
-    targets: dict[str, float] # String of the attributes you want to mutate!
+    duration: float = None
+    rate: float = None
+    obj: Any = None
+    targets: dict[str, float] = field(default_factory=dict) # String of the attributes you want to mutate!
     ease_func: Callable[[float], float] = linear
-    callback: Callable[[], None] = lambda: None
     args: tuple[Any, ...] = tuple()
     _progress: float = 0.0
+
+    def __post_init__(self):
+        if self.duration is None:
+            coord1 = []
+            coord2 = []
+            for key in self.targets.keys():
+                coord1.append(self.obj[key])
+                coord2.append(self.targets[key])
+            self.duration = dist(coord1, coord2) / self.rate
 
     def start(self):
         """Must also have the original and resulting position to actually tween
@@ -154,9 +171,6 @@ class TweenNode:
             self._original[target] = getattr(self.obj, target)
             self._destinations[target] = dest
         self.soft_reset()
-
-    def finish(self):
-        self.callback()
 
     @property
     def finished(self):
@@ -224,14 +238,14 @@ class TweenManager:
 default_manager = TweenManager()
 
 
-def tweenify(tween):
+def tweenify(tween: Tween):
     """Makes a function when called return a tween that executes the
     decorated function for the tween's callback."""
     def decorator(func):
         def wrapper(*args):
             twn_cpy = copy(tween)
-            twn_cpy._last.args = args
-            twn_cpy._last.callback = func
+            twn_cpy.args = args
+            twn_cpy.callback = func
             return twn_cpy
         return wrapper
     return decorator
@@ -265,6 +279,7 @@ def call_then_tween(tween, manager=default_manager):
         def wrapper(*args):
             result = func(*args)
             twn_cpy = copy(tween)
+            twn_cpy.callback = func
             manager.add(twn_cpy)
             return result
         return wrapper
@@ -287,4 +302,3 @@ def repeat(tween: Tween, count=None) -> Tween:
         tween._iter_children = iter(tween.children)
         next(tween._iter_children) # Skip the first already done!
     return tween
-

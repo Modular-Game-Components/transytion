@@ -18,17 +18,17 @@ class Ball:
 ball = Ball(screen.get_width() / 2.0, 0.0)
 
 # 4 second qudratic fall to center of screen.
-fall = ty.Tween(1.0, # Duration of tween is 4 seconds.
-                  ball, # What object to mess with.
-                  {"y" : screen.get_height() / 2}, # Animate what to where.
-                  ease_func=quad) # How to animate it (defaults to linear)
+fall = ty.Tween(duration=1.0, # Duration of tween is 4 seconds.
+                obj=ball, # What object to mess with.
+                targets={"y" : screen.get_height() / 2}, # Animate what to where.
+                ease_func=quad) # How to animate it (defaults to linear)
 
 pause = ty.Delay(1.0)
 
-roll = ty.Tween(1.0,
-                  ball,
-                  {"x" : screen.get_width()},
-                  ease_func=quad)
+roll = ty.Tween(duration=1.0,
+                obj=ball,
+                targets={"x" : screen.get_width()},
+                ease_func=quad)
 
 fall_pause_roll = ty.chain([fall, pause, roll])
 

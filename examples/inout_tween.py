@@ -18,10 +18,10 @@ class Ball:
 ball = Ball(screen.get_width() / 2.0, 0.0)
 
 # 4 second qudratic fall to center of screen.
-fall = ty.Tween(1.0, # Duration of tween is 4 seconds.
-                  ball, # What object to mess with.
-                  {"y" : screen.get_height() / 2}, # Animate what to where.
-                  ease_func=inout(quad)) # How to animate it
+fall = ty.Tween(duration=1.0, # Duration of tween is 4 seconds.
+                obj=ball, # What object to mess with.
+                targets={"y" : screen.get_height() / 2}, # Animate what to where.
+                ease_func=inout(quad)) # How to animate it
 
 ty.default_manager.add(fall) # Added it to the world.
 

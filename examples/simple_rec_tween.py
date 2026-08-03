@@ -29,9 +29,9 @@ def stop_rec():
     exit()
 
 # 4 second qudratic fall to center of screen.
-fall = ty.Tween(1.0, # Duration of tween is 4 seconds.
-                ball, # What object to mess with.
-                {"y" : screen.get_height() / 2}, # Animate what to where.
+fall = ty.Tween(duration=1.0, # Duration of tween is 4 seconds.
+                obj=ball, # What object to mess with.
+                targets={"y" : screen.get_height() / 2}, # Animate what to where.
                 ease_func=bounce,
                 callback=stop_rec
                 )

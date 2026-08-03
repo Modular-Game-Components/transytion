@@ -17,9 +17,9 @@ class Ball:
 
 ball = Ball(screen.get_width() / 4, screen.get_height() / 4)
 
-fall = ty.Tween(1.0,
-                ball,
-                {"y" : 3 * screen.get_height() / 4.0},
+fall = ty.Tween(duration=1.0,
+                obj=ball,
+                targets={"y" : 3 * screen.get_height() / 4.0},
                 ease_func=inout(quad))
 
 right = ty.Tween(1.0,
