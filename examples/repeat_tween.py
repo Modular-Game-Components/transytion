@@ -22,19 +22,19 @@ fall = ty.Tween(duration=1.0,
                 targets={"y" : 3 * screen.get_height() / 4.0},
                 ease_func=inout(quad))
 
-right = ty.Tween(1.0,
-                 ball,
-                 {"x" : 3 * screen.get_width() / 4.0},
+right = ty.Tween(duration=1.0,
+                 obj=ball,
+                 targets={"x" : 3 * screen.get_width() / 4.0},
                  ease_func=inout(quad))
 
-rise = ty.Tween(1.0,
-                ball,
-                {"y" : screen.get_height() / 4.0},
+rise = ty.Tween(duration=1.0,
+                obj=ball,
+                targets={"y" : screen.get_height() / 4.0},
                 ease_func=inout(quad))
 
-left = ty.Tween(1.0,
-                ball,
-                {"x" : screen.get_width() / 4.0},
+left = ty.Tween(duration=1.0,
+                obj=ball,
+                targets={"x" : screen.get_width() / 4.0},
                 ease_func=inout(quad))
 
 

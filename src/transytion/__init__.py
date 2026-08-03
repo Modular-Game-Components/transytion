@@ -12,8 +12,8 @@ from .ease_funcs import linear
 class Tween:
     """A list of TweenNodes with some organizational skills."""
     def __init__(self,
-                 duration: float = None, 
-                 rate: float = None,
+                 duration: float | None = None, 
+                 rate: float | None = None,
                  obj: Any = None,
                  targets: dict[str, float] = {},
                  children: list[Tween] | list[TweenNode] = [],
@@ -37,6 +37,7 @@ class Tween:
         else:
             comp_duration = 0.0
             for tween in children:
+                assert tween.duration is not None
                 comp_duration += tween.duration
             self.duration = comp_duration
             self.children: list[Tween] | list[TweenNode] = children
@@ -139,8 +140,8 @@ class Delay(Tween):
 @dataclass
 class TweenNode:
     """Fundamental building block for Tweens."""
-    duration: float = None
-    rate: float = None
+    duration: float | None = None
+    rate: float | None = None
     obj: Any = None
     targets: dict[str, float] = field(default_factory=dict) # String of the attributes you want to mutate!
     ease_func: Callable[[float], float] = linear
@@ -154,6 +155,7 @@ class TweenNode:
             for key in self.targets.keys():
                 coord1.append(self.obj[key])
                 coord2.append(self.targets[key])
+            assert self.rate is not None
             self.duration = dist(coord1, coord2) / self.rate
 
     def start(self):
@@ -174,6 +176,7 @@ class TweenNode:
         return self.progress >= 1.0
 
     def update(self, dt: float):
+        assert self.duration is not None
         self.progress += dt / self.duration
 
     @property
