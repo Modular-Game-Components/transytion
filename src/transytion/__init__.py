@@ -29,12 +29,9 @@ class Tween:
         if len(children) == 0:
             if rate is None and duration is None:
                 raise ValueError("Neither rate or duration is defined")
-            if duration is not None:
-                self.duration = duration
-            elif rate is not None:
-                self.duration = 1.0
             node = TweenNode(duration=duration, obj=obj, targets=targets,
                              ease_func=ease_func, args=args)
+            self.duration = node.duration
             self.children: list[Tween] | list[TweenNode] = [node]
             self._iter_children: Iterator[Tween] | Iterator[TweenNode] = iter(self.children)
         else:
